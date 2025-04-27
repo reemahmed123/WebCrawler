@@ -8,18 +8,19 @@ package invertedIndex;
  *
  * @author ehab
  */
- 
+
 public class Posting {
 
     public Posting next = null;
     int docId;
-    int dtf = 1; // Document term frequency
+    double dtf = 1.0;// Document term frequency
+    public double tf_idf = 0.0;  // holds tf-idf value for this word in this document
 
-    Posting(int id, int t) {
+    Posting(int id, double t) {
         docId = id;
         dtf=t;
     }
-    
+
     Posting(int id) {
         docId = id;
     }
