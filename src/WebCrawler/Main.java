@@ -15,36 +15,12 @@ public class Main {
                 //"https://en.wikipedia.org/wiki/Stub"        // the generic stub explanation page
         });
 
-        /*Index5 idx = new Index5();
-        idx.buildIndexFromCrawler(
-                crawler.getDocumentContents(),
-                crawler.getDocumentUrls()
-        );
-        String doc1Text = crawler.getDocumentContents().get("doc1");
-        System.out.println("=== doc1 raw ===\n" + doc1Text);
-
-        String[] tokens = doc1Text.toLowerCase().split("\\W+");
-        Set<String> unique = new HashSet<>();
-        for (String t : tokens) {
-            if (t.length() > 1) {
-                unique.add(t);
-            }
-        }
-        System.out.println("Unique index-able tokens in doc1: " + unique);*/
-        // 2) Build the index from the crawler’s maps
         Index5 idx = new Index5();
         idx.buildIndexFromCrawler(
                 crawler.getDocumentContents(),
                 crawler.getDocumentUrls()
         );
-
-        // 3) Inspect dictionary and postings
         idx.printDictionary();
-
-
-        //idx.indexOneLine("The writer tried to write many stories.",0);
-        /*String w="drinker";
-        w=idx.stemWord(w);
-        System.out.println(w);*/
+        //Xidx.printDocumentVectors(); // Print all document vectors
     }
 }
