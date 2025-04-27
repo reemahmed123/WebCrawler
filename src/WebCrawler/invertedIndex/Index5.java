@@ -11,6 +11,19 @@ import java.util.*;
  *
  * @author ehab
  */
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+//package invertedIndex;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ *
+ * @author ehab
+ */
 public class Index5 {
 
     private final Stemmer stemmer = new Stemmer();
@@ -80,8 +93,6 @@ public class Index5 {
     }
 
     //----------------------------------------------------------------------------
-    //Processes a single line of text, tokenizes it, and updates the inverted index.
-    // This method filters stop words, applies stemming (not now) , and updates term frequencies.
     public int indexOneLine(String ln, int fid) {
         int flen = 0;//number of words in this line
 
@@ -89,41 +100,44 @@ public class Index5 {
         //   String[] words = ln.replaceAll("(?:[^a-zA-Z0-9 -]|(?<=\\w)-(?!\\S))", " ").toLowerCase().split("\\s+");
         flen += words.length;
         for (String word : words) {
-            word = word.toLowerCase();
-            if (stopWord(word)) {// Skip stop words
-                continue;
-            }
-            word = stemWord(word);  // Apply stemming to the word (not applied now )
-            //System.out.println("Original: " + word + " → Stemmed: " + stemWord(word));
-
-            // check to see if the word is not in the dictionary
-            // if not add it
-            if (!index.containsKey(word)) {
-                index.put(word, new DictEntry());
-            }
-            // add document id to the posting list
-            // Check if the document ID is already in the posting list
-            if (!index.get(word).postingListContains(fid)) {
-                index.get(word).doc_freq += 1; //set doc freq to the number of doc that contain the term 
-                if (index.get(word).pList == null) {// If the posting list is empty, create a new one
-                    index.get(word).pList = new Posting(fid);
-                    index.get(word).last = index.get(word).pList;
-
-                } else {// Append the new posting to the list
-                    index.get(word).last.next = new Posting(fid);
-                    index.get(word).last = index.get(word).last.next;
+            if (!word.matches(".*\\d.*")) {
+                // Index the token
+                word = word.toLowerCase();
+                if (stopWord(word)) {// Skip stop words
+                    continue;
                 }
-            } else {
-                // If the document already contains the word, increase its term frequency in this document
-                index.get(word).last.dtf += 1;
-            }
-            //set the term_fteq in the collection
-            index.get(word).term_freq += 1;
-            if (word.equalsIgnoreCase("lattice")) {
+                word = stemWord(word);  // Apply stemming to the word (not applied now )
+                //System.out.println("Original: " + word + " → Stemmed: " + stemWord(word));
 
-                System.out.println("  <<" + index.get(word).getPosting(1) + ">> " + ln);
-            }
+                // check to see if the word is not in the dictionary
+                // if not add it
+                if (!index.containsKey(word)) {
+                    index.put(word, new DictEntry());
+                }
+                // add document id to the posting list
+                // Check if the document ID is already in the posting list
+                if (!index.get(word).postingListContains(fid)) {
+                    index.get(word).doc_freq += 1; //set doc freq to the number of doc that contain the term
+                    if (index.get(word).pList == null) {// If the posting list is empty, create a new one
+                        index.get(word).pList = new Posting(fid);
+                        index.get(word).last = index.get(word).pList;
 
+                    } else {// Append the new posting to the list
+                        index.get(word).last.next = new Posting(fid);
+                        index.get(word).last = index.get(word).last.next;
+                    }
+                } else {
+                    // If the document already contains the word, increase its term frequency in this document
+                    index.get(word).last.dtf += 1;
+                }
+                //set the term_fteq in the collection
+                index.get(word).term_freq += 1;
+                if (word.equalsIgnoreCase("lattice")) {
+
+                    System.out.println("  <<" + index.get(word).getPosting(1) + ">> " + ln);
+                }
+
+            }
         }
         return flen;// Return the number of words processed
     }
@@ -143,7 +157,7 @@ public class Index5 {
         return false;
 
     }
-//----------------------------------------------------------------------------  
+//----------------------------------------------------------------------------
 
     //Stemming is the process of reducing a word to its root form.
     //  This method currently returns the word unchanged.
@@ -184,10 +198,27 @@ public class Index5 {
      * //param docs  map of documentId ("doc0", "doc1", …) → full extracted text
      * //param urls  map of documentId → original URL
      */
+    public void calculateIDFs() {
+        for (DictEntry entry : index.values()) {
+            entry.calculateIDF(N); // N is the total number of documents
+        }
+    }
+
+    public void calculateTFIDFs() {
+        for (Map.Entry<String, DictEntry> entry : index.entrySet()) {
+            DictEntry dictEntry = entry.getValue();
+            Posting p = dictEntry.pList;
+            while (p != null) {
+                // TF-IDF = TF * IDF
+                p.tf_idf = p.dtf * dictEntry.idf;
+                p = p.next;
+            }
+        }
+    }
     public void buildIndexFromCrawler(Map<String, String> docs,
                                       Map<String, String> urls) {
         // Total documents
-         N = docs.size();
+        N = docs.size();
 
         for (Map.Entry<String, String> entry : docs.entrySet()) {
             String docIdStr = entry.getKey();      // e.g. "doc0"
@@ -220,5 +251,66 @@ public class Index5 {
 
         // Finally, sort your index so printDictionary() and queries work
         sortIndex();
+        applyTfWeighting();
+        calculateIDFs();       // Calculate IDF for all terms
+        calculateTFIDFs();    // Calculate TF-IDF weights
+        printDocumentVectors();  // This will display the TF-IDF values for each document and term
     }
+    public void applyTfWeighting() {
+        for (DictEntry entry : index.values()) {
+            Posting p = entry.pList;
+            while (p != null) {
+                if (p.dtf > 0) {
+                    p.dtf = 1 + Math.log10(p.dtf);
+                }
+                p = p.next;
+            }
+        }
+        /*for (Map.Entry<String, DictEntry> entry : index.entrySet()) {
+            Posting p = entry.getValue().pList;
+            while (p != null) {
+                System.out.println("Term: " + entry.getKey() + " | DocID: " + p.docId + " | Weighted TF: " + p.dtf);
+                p = p.next;
+            }
+        }*/
+    }
+    // Add this method to get document vector for a specific document
+    public Map<String, Double> getDocumentVector(int docId) {
+        Map<String, Double> docVector = new HashMap<>();
+
+        for (Map.Entry<String, DictEntry> entry : index.entrySet()) {
+            String term = entry.getKey();
+            DictEntry dictEntry = entry.getValue();
+            Posting p = dictEntry.pList;
+
+            while (p != null) {
+                if (p.docId == docId) {
+                    docVector.put(term, p.tf_idf);
+                    break;
+                }
+                p = p.next;
+            }
+        }
+
+        return docVector;
+    }
+
+    // Add this method to print document vectors (for debugging)
+
+    public void printDocumentVectors() {
+        for (Map.Entry<String, DictEntry> entrySet : index.entrySet()) {
+            String term = entrySet.getKey();
+            DictEntry entry = entrySet.getValue();
+            Posting p = entry.pList;
+
+            System.out.println("Term: " + term + " (IDF: " + entry.idf + ")");
+
+            // Iterate through each document posting
+            while (p != null) {
+                System.out.println("  DocID: " + p.docId +" | Weighted TF: " + p.dtf+ " | TF-IDF: " + p.tf_idf);
+                p = p.next;
+            }
+        }
+    }
+
 }
