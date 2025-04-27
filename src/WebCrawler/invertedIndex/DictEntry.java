@@ -12,7 +12,8 @@ public class DictEntry {
 
     public int doc_freq = 0; // number of documents that contain the term
     public int term_freq = 0; //number of times the term is mentioned in the collection
-//=====================================================================
+    public double idf = 0.0;
+    //=====================================================================
     //public HashSet<Integer> postingList;
     Posting pList = null;
     Posting last = null;
@@ -31,7 +32,7 @@ public class DictEntry {
     }
 //------------------------------------------------
 
-    int getPosting(int i) {
+    double getPosting(int i) {
         int found = 0;
         Posting p = pList;
         while (p != null) {
@@ -60,45 +61,52 @@ public class DictEntry {
             last = last.next;
         }
     }
-// implement insert (int docId) method   //done
-void insert(int docId) {
-    if (pList == null) {
-        // First posting in the list
-        pList = new Posting(docId);
-        last = pList;
-        // First occurrence of this term in any document
-        doc_freq = 1;
-        term_freq = 1;
-    } else {
-        // Check if the docId already exists
-        Posting current = pList;
+    // implement insert (int docId) method   //done
+    void insert(int docId) {
+        if (pList == null) {
+            // First posting in the list
+            pList = new Posting(docId);
+            last = pList;
+            // First occurrence of this term in any document
+            doc_freq = 1;
+            term_freq = 1;
+        } else {
+            // Check if the docId already exists
+            Posting current = pList;
 
-        while (current != null) {
-            if (current.docId == docId) {
-                // If the document already exists, increase term frequency (dtf)
-                current.dtf++;
-                term_freq++;  // Increase term frequency across all documents
-                return; // Stop, no need to add duplicate entry
+            while (current != null) {
+                if (current.docId == docId) {
+                    // If the document already exists, increase term frequency (dtf)
+                    current.dtf++;
+                    term_freq++;  // Increase term frequency across all documents
+                    return; // Stop, no need to add duplicate entry
+                }
+                current = current.next;
             }
-            current = current.next;
-        }
 
-        // If docId was not found, add a new posting at the end
-        last.next = new Posting(docId);
-        last = last.next;
-        // Increase document frequency (new document contains this term)
-        doc_freq++;
-        term_freq++;  // Increase total term frequency
+            // If docId was not found, add a new posting at the end
+            last.next = new Posting(docId);
+            last = last.next;
+            // Increase document frequency (new document contains this term)
+            doc_freq++;
+            term_freq++;  // Increase total term frequency
+        }
     }
-}
 
     DictEntry() {
         //  postingList = new HashSet<Integer>();
     }
 
     DictEntry(int df, int tf) {
-        doc_freq = df; 
+        doc_freq = df;
         term_freq = tf;
+    }
+    public void calculateIDF(int totalDocs) {
+        if (doc_freq > 0) {
+            idf = Math.log10((double)totalDocs / doc_freq);
+        } else {
+            idf = 0.0;
+        }
     }
 
 }
