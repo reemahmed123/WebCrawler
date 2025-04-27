@@ -8,7 +8,7 @@ import java.util.*;
 
 public class Crawler {
     // Maximum number of pages to crawl
-    private static final int MAX_PAGES = 2;
+    private static final int MAX_PAGES = 10;
 
     // Store visited URLs to avoid duplicates
     private final Set<String> visitedUrls;
@@ -85,41 +85,7 @@ public class Crawler {
         System.out.println("Crawling completed. " + docId + " pages crawled.");
     }
 
-    /*private String extractText(Document doc) {
-        // Get the page title
-        String title = doc.title();
 
-        // Remove unwanted elements
-        doc.select("script, style, .navbox, .thumb, .infobox, .toc, .mw-editsection, .ambox, .hatnote").remove();
-
-        // Get the main content
-        Element content = doc.select("#mw-content-text").first();
-        String text ;
-
-        if (content != null) {
-            // Get paragraphs for better text extraction
-            Elements paragraphs = content.select("p");
-            StringBuilder sb = new StringBuilder();
-
-            // Add title as first line
-            sb.append("TITLE: ").append(title).append("\n\n");
-
-            // Add paragraphs
-            for (Element para : paragraphs) {
-                String paraText = para.text().trim();
-                if (!paraText.isEmpty()) {
-                    sb.append(paraText).append("\n");
-                }
-            }
-
-            text = sb.toString();
-        } else {
-            // Fallback to body text
-            text = "TITLE: " + title + "\n\n" + doc.body().text();
-        }
-
-        return text;
-    }*/
     private String extractText(Document doc) {
         // Get clean title (remove " - Wikipedia" suffix)
         String title = doc.title().replaceAll(" - Wikipedia$", "").trim();
@@ -173,7 +139,6 @@ public class Crawler {
                 }
             }
         } else {
-            // Fallback - should rarely happen for Wikipedia
             sb.append(doc.body().text());
         }
 
